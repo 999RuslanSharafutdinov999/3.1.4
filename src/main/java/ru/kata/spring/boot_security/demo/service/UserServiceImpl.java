@@ -64,6 +64,7 @@ public class UserServiceImpl implements UserService {
         userRepository.save(user);
     }
 
+
     @Transactional
     @Override
     public void updateUser(User updatedUser) {
@@ -81,6 +82,7 @@ public class UserServiceImpl implements UserService {
                     "Email already exists: " + updatedUser.getEmail());
         }
 
+        // ОБНОВЛЯЕМ ВСЕ ПОЛЯ
         existingUser.setName(updatedUser.getName());
         existingUser.setLastname(updatedUser.getLastname());
         existingUser.setAge(updatedUser.getAge());
@@ -88,15 +90,19 @@ public class UserServiceImpl implements UserService {
         existingUser.setEmail(updatedUser.getEmail());
         existingUser.setRoles(updatedUser.getRoles());
 
+        // ПАРОЛЬ ОБНОВЛЯЕМ ТОЛЬКО ЕСЛИ ПЕРЕДАН НОВЫЙ
         String newPassword = updatedUser.getPassword();
         if (newPassword != null && !newPassword.trim().isEmpty()) {
-            if (!newPassword.startsWith("$2a$") && !newPassword.startsWith("$2b$") && !newPassword.startsWith("$2y$")) {
-                existingUser.setPassword(passwordEncoder.encode(newPassword));
-            }
+            existingUser.setPassword(passwordEncoder.encode(newPassword));
         }
+        // ЕСЛИ ПАРОЛЬ ПУСТОЙ - ОСТАВЛЯЕМ СТАРЫЙ
 
         userRepository.save(existingUser);
     }
+
+
+
+
 
     @Transactional
     @Override

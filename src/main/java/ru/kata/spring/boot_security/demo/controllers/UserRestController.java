@@ -4,7 +4,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.validation.BeanPropertyBindingResult;
 import org.springframework.validation.BindingResult;
+import org.springframework.validation.FieldError;
 import org.springframework.web.bind.annotation.*;
 import ru.kata.spring.boot_security.demo.dto.UserDTO;
 import ru.kata.spring.boot_security.demo.model.Role;
@@ -89,27 +91,66 @@ public class UserRestController {
         }
     }
 
+
+
+
+
+
     // Обновить пользователя
     @PutMapping("/users/{id}")
     public ResponseEntity<?> updateUser(@PathVariable Long id,
                                         @Valid @RequestBody UserDTO userDTO,
                                         BindingResult bindingResult) {
+
+        // ВРУЧНУЮ УСТАНАВЛИВАЕМ ФЛАГ isNew = false для обновления
+        userDTO.setId(id);
+        userDTO.setNew(false);
+
+        // ФИЛЬТРУЕМ ОШИБКИ - ИГНОРИРУЕМ ОШИБКИ ПАРОЛЯ ДЛЯ СУЩЕСТВУЮЩИХ ПОЛЬЗОВАТЕЛЕЙ
         if (bindingResult.hasErrors()) {
-            return createValidationErrorResponse(bindingResult);
+            List<FieldError> filteredErrors = bindingResult.getFieldErrors().stream()
+                    .filter(error -> {
+                        // Игнорируем ошибки passwordValid для существующих пользователей
+                        if ("passwordValid".equals(error.getField())) {
+                            return false; // ИГНОРИРУЕМ эту ошибку
+                        }
+                        return true; // Оставляем все остальные ошибки
+                    })
+                    .collect(Collectors.toList());
+
+            if (!filteredErrors.isEmpty()) {
+                // Создаем новый BindingResult с отфильтрованными ошибками
+                BeanPropertyBindingResult filteredBindingResult =
+                        new BeanPropertyBindingResult(userDTO, "user");
+                for (FieldError error : filteredErrors) {
+                    filteredBindingResult.addError(error);
+                }
+                return createValidationErrorResponse(filteredBindingResult);
+            }
         }
 
         try {
-            userDTO.setId(id);
-            userDTO.setNew(false); // Устанавливаем флаг существующего пользователя
             User user = convertToEntity(userDTO);
+
+            // ЕСЛИ ПАРОЛЬ ПУСТОЙ - БЕРЕМ СТАРЫЙ ПАРОЛЬ
+            if (userDTO.getPassword() == null || userDTO.getPassword().trim().isEmpty()) {
+                User existingUser = userService.getById(id);
+                user.setPassword(existingUser.getPassword());
+            }
+
             userService.updateUser(user);
             UserDTO updatedUserDTO = convertToDTO(user);
-            updatedUserDTO.setPassword(null); // Не возвращаем пароль
+            updatedUserDTO.setPassword(null);
             return new ResponseEntity<>(updatedUserDTO, HttpStatus.OK);
         } catch (RuntimeException e) {
             return createErrorResponse(e.getMessage(), HttpStatus.BAD_REQUEST);
         }
     }
+
+
+
+
+
 
     // Удалить пользователя
     @DeleteMapping("/users/{id}")

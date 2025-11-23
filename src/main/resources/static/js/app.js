@@ -293,7 +293,9 @@ class UserApp {
         document.getElementById('editUsername').value = user.username;
         document.getElementById('editAge').value = user.age;
         document.getElementById('editEmail').value = user.email;
+
         document.getElementById('editPassword').value = '';
+        document.getElementById('editPassword').placeholder = 'Leave empty to keep current password';
 
         const rolesSelect = document.getElementById('editRoles');
         Array.from(rolesSelect.options).forEach(option => {

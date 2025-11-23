@@ -34,8 +34,15 @@ public class UserDTO {
     @Email(message = "Email не валиден")
     private String email;
 
+
+
+
     // Пароль не обязателен при обновлении, но обязателен при создании
     private String password;
+
+
+
+
 
     @NotEmpty(message = "Должна быть выбрана хотя бы одна роль")
     private Set<String> roles;
@@ -136,11 +143,17 @@ public class UserDTO {
     // Валидационные методы
     @AssertTrue(message = "Пароль обязателен для нового пользователя")
     public boolean isPasswordValid() {
+
         if (isNew) {
             return password != null && !password.trim().isEmpty();
         }
+
         return true; // Для существующих пользователей пароль не обязателен
     }
+
+
+
+
 
     @AssertTrue(message = "ID должен быть null для нового пользователя")
     public boolean isIdValidForNewUser() {

@@ -25,9 +25,9 @@ public class SuccessUserHandler implements AuthenticationSuccessHandler {
                 .anyMatch(auth -> auth.getAuthority().equals("ROLE_USER"));
 
         if (isAdmin) {
-            response.sendRedirect("/admin/users");
+            response.sendRedirect("/admin/users"); // Теперь это просто view
         } else if (isUser) {
-            response.sendRedirect("/user");
+            response.sendRedirect("/user"); // Просто view
         } else {
             response.sendRedirect("/");
         }
